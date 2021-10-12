@@ -18,6 +18,8 @@ server <- function(input, output, session) {
       )
     )
   )
+  
+  # get all plauers data for a specifiv picked season
 
   player_season_data <- reactive({
     myfiles %>%
@@ -25,22 +27,22 @@ server <- function(input, output, session) {
       dplyr::filter(season == input$SeasonPick)
   })
 
+  
+  # render the line plot with every Alumni season
 
   output$season_stat_plot <- renderPlotly(
     season_stats_plot
   )
 
 
+  # get overall Alumni stats for a picked season
   filter_season <- reactive({
     seasons_total %>%
       dplyr::filter(season == input$SeasonPick)
   })
 
-  # ValueBoxes cards
-
-
-
-
+  
+  # Pick a plaiyer during a specific season
 
   output$SeasonPlayerPick_UI <- renderUI({
     players_in_season <- player_season_data() %>%
@@ -81,33 +83,12 @@ server <- function(input, output, session) {
     rownames = FALSE,
     options = list(autoWidth = TRUE, scrollX = T)
   )
-
-
-  output$Apps <- renderPlotly({
-    dat <- player_season_data() %>% filter(Surname %in% c("Fresneda", "Ferguson"))
-    p <- ggplot(dat, aes(x = Surname, y = Ap)) +
-      geom_bar(stat = "identity")
-
-    fig <- ggplotly(p)
-  })
-
+  
+  
   output$SeasonGoalBoxplot <- renderPlotly({
     dat <- seasons_total %>%
       select(season, G, A) # %>%
-    # dplyr::rename(Goals = G, `Goals Against` = A) %>%
-    # pivot_longer(!season, names_to = 'attribute', values_to = 'value')
-
-    # p <- ggplot(dat, aes(x = attribute, y = value))+
-    #  geom_boxplot(aes(fill = attribute),show.legend = F)+
-    #  geom_jitter(width = 0.1,show.legend = F)+
-    #  theme_bw(base_size = 10)+
-    #  theme(axis.title.y = element_blank(),
-    #        axis.title.x = element_blank())+
-    #  facet_grid(~attribute, scales = c('free'))+
-    #  scale_fill_manual(values = c('Goals' = 'purple',
-    #                                'Goals Against' = 'orange'))
-    #  fig <- ggplotly(p)%>% layout(showlegend = FALSE, hooverinfo = 'y')
-    #
+    
     plot_ly(dat,
       type = "box", text = ~season, y = ~G, name = "Goals", boxpoints = "all", pointpos = 0,
       marker = list(color = "black"),
@@ -125,21 +106,7 @@ server <- function(input, output, session) {
 
   output$SeasonbookingsBoxplot <- renderPlotly({
     dat <- seasons_total %>%
-      select(season, Y, R, SB) # %>%
-    # dplyr::rename(`Yellow cards`=Y,`Red cards` = R, `Sin bins` = SB) %>%
-    # pivot_longer(!season, names_to = 'attribute', values_to = 'value')
-
-    # p <- ggplot(dat, aes(x = attribute, y = value))+
-    #  geom_boxplot(aes(fill = attribute),show.legend = F)+
-    #  geom_jitter(width = 0.1, show.legend = F)+
-    #  theme_bw(base_size = 10)+
-    #  theme(axis.title.y = element_blank(),
-    #        axis.title.x = element_blank())+
-    #  facet_grid(~attribute, scales = c('free'))+
-    #  scale_fill_manual(values = c('Yellow cards' = '#ada502',
-    #                                'Red cards' = 'red',
-    #                                'Sin bins' = 'green'))
-    # fig <- ggplotly(p) %>% layout(showlegend = FALSE)
+      select(season, Y, R, SB) 
 
     plot_ly(dat,
       type = "box", text = ~season, y = ~Y, name = "Yellow Cards", boxpoints = "all", pointpos = 0,
@@ -161,6 +128,23 @@ server <- function(input, output, session) {
       ) %>%
       layout(showlegend = FALSE)
   })
+  
+  output$seasonStats <- renderText({
+    players_in_season <- player_season_data() %>%
+      tidyr::unite(col = "Name_Surname", Name, Surname, sep = " ")
+    
+    topG <- players_in_season %>% slice_max(order_by = G, n = 1, with_ties = T)
+    if (nrow(topG)>1) {
+      topG <- paste0('multip G')
+    } else {
+      topG <- paste0(topG[1, 'Name_Surname'], ' with ', topG[1, 'G'], ' goals')
+    }
+    
+    paste0('During the season add trophies...',
+           'the player with most Goals was ', topG)
+  })
+  
+  
 
   output$SeasonPlayerPlot <- renderPlotly({
     if (is.null(input$SeasonPlayerPick)) {

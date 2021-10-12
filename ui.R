@@ -65,9 +65,11 @@ ui <- tags$div(
           )
         ),
         fluidRow(
-          column(
+          box(
             width = 3,
-            uiOutput("SeasonPick_UI")
+            uiOutput("SeasonPick_UI"),
+            background = 'blue', collapsible = F,collapsed = F,
+            textOutput(outputId = 'seasonStats')
           ),
           column(
             width = 3,
